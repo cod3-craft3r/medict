@@ -1,0 +1,40 @@
+{
+  "terms": [
+    {
+      "termName": "Anatomy",
+      "definition": "Study of the structure of the body.",
+      "category": "Human Anatomy",
+      "learnedStatus": false,
+      "lastReviewDate": "2025-08-25",
+      "creationDate": "2025-08-15",
+      "notes": "Important for understanding body systems."
+    },
+    {
+      "termName": "Physiology",
+      "definition": "Study of the functions of the body.",
+      "category": "Human Physiology",
+      "learnedStatus": true,
+      "lastReviewDate": "2025-08-24",
+      "creationDate": "2025-08-15",
+      "notes": "Key for understanding bodily functions."
+    },
+    {
+      "termName": "Pathology",
+      "definition": "Study of diseases and their effects on the body.",
+      "category": "Medical Pathology",
+      "learnedStatus": false,
+      "lastReviewDate": "2025-06-22",
+      "creationDate": "2025-05-16",
+      "notes": "Crucial for diagnosing illnesses."
+    },
+    {
+      "termName": "Pharmacology",
+      "definition": "Study of drugs and their effects on the body.",
+      "category": "Medical Pharmacology",
+      "learnedStatus": true,
+      "lastReviewDate": "2025-08-10",
+      "creationDate": "2025-07-01",
+      "notes": "Essential for understanding medication."
+    }
+  ]
+}
