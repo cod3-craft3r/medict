@@ -1,10 +1,12 @@
+#include "util.hpp"
 #include "CommandHandler.hpp"
 
-CommandHandler::CommandHandler(Database& database, const int argc, const char* argv[])
-    : db(database)
+void CommandHandler::set_database(std::unique_ptr<Database> database) {
+    db = std::move(database);
+    std::cout << "Database has been set in CommandHandler.\n";
+}
+
+void CommandHandler::list_all_terms()
 {
-    if (argc < 3) {
-        std::cout << "wrong usage." << std::endl;
-        exit(1);
-    }
+    db->list_all_terms();
 }

@@ -1,6 +1,3 @@
-#include <iostream>
-#include <ctime>
-#include <chrono>
 #include "util.hpp"
 
 // Utility functions can be added here
@@ -37,4 +34,41 @@ void print_time_info(std::tm lastReview, std::tm creation)
     }
     // std::cout << "Current time: "
     //           << std::put_time(&localTime, "%a, %Y-%m-%d %H:%M:%S") << std::endl;
+}
+
+std::string get_lower(std::string &str)
+{
+    for (char& c : str) {
+        c = std::tolower(c);
+    }
+
+    return str;
+}
+
+std::filesystem::path getDataDir() {
+    const char *xdgDataDir = std::getenv("XDG_DATA_HOME");
+    std::string dataDir;
+
+    if (xdgDataDir) {
+        dataDir = std::string(xdgDataDir) + "/medict";
+    }
+    else {
+        const char *homeDir = std::getenv("HOME");
+        if (!homeDir) {
+            throw std::runtime_error("$HOME is not set.");
+        }
+        dataDir = std::string(homeDir) + "/.local/share/medict";
+    }
+
+    if (!std::filesystem::exists(dataDir)) {
+        try {
+            std::filesystem::create_directories(dataDir);
+            std::cout << "Created directories " << dataDir << std::endl;
+        } catch (const std::filesystem::filesystem_error& e) {
+            throw std::runtime_error("Couldn't create data directories: "+ std::string(e.what()));
+        }
+    }
+
+    std::filesystem::path dbDir{dataDir};
+    return dbDir;
 }
