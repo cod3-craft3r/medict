@@ -1,5 +1,6 @@
 #include <string>
 #include "Database.hpp"
+#include "Term.hpp"
 
 class CommandHandler {
 private:
@@ -17,8 +18,8 @@ public:
 
     void set_database(std::unique_ptr<Database> database);
     // Methods to handle commands
-    void list_all_terms();
-    void handleAddCommand(const std::string& name, const std::string& def, const std::string& cat);
+    void list_terms_in_know_base();
+    bool add_term_to_know_base();
     void handleSearchCommand(const std::string& name);
     void handleLearnedStatusCommand(const std::string& name, bool status);
 };

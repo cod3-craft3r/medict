@@ -72,3 +72,27 @@ std::filesystem::path getDataDir() {
     std::filesystem::path dbDir{dataDir};
     return dbDir;
 }
+
+std::string tm_to_str(const std::tm& t, const char* format /* = "%Y-%m-%d %H:%M:%S"*/) {
+    std::stringstream ss;
+    ss << std::put_time(&t, format);
+
+    return ss.str();
+}
+
+std::tm str_to_tm(const std::string& str, const char* format /* = "%Y-%m-%d %H:%M:%S"*/) {
+    std::tm t = {};
+    std::stringstream ss(str);
+    try {
+        ss >> std::get_time(&t, format);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Failed to parse time string" + std::string(e.what()));
+    }
+
+    // another check for failures
+    if (ss.fail()) {
+        throw std::runtime_error("Failed to parse time string");
+    }
+    
+    return t;
+}

@@ -10,8 +10,9 @@ using json = nlohmann::json;
 class Database {
 private:
     // std::vector<Term> terms;
-    // std::string filePath; // Path to the JSON file
+    std::string filePath;    // Path to the JSON file
     json knowledgeSpace;
+    int termsCount = 0;     // to keep track of number of terms in the current knowledge space
 
 public:
 
@@ -31,7 +32,7 @@ public:
     void saveData();
 
     // Method to add a new term
-    void addTerm(const Term& term);
+    bool add_term(Term& newTerm);
 
     // Method to search for a term by name
     Term* searchTerm(const std::string& termName);

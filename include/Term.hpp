@@ -1,3 +1,4 @@
+#pragma once
 #include <chrono>
 #include <ctime>
 #include <string>
@@ -15,8 +16,8 @@ public:
     std::string  notes;
 
     // Constructor, getter and setter functions.
-    Term(std::string name, std::string def, std::string cat)
-        : termName(name), definition(def), category(cat), learnedStatus(false)
+    Term(std::string name, std::string def, std::string cat, std::string notes)
+        : termName(name), definition(def), category(cat), notes(notes), learnedStatus(false)
         {
             // lastReviewDate = "empty";
             // notes = "empty";
