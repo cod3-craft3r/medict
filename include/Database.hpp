@@ -29,13 +29,14 @@ public:
     void loadData();
 
     // Method to save data to file
+    // see if we can offload the saving part in other functions to this one. Possibly call this while exiting the app.
     void saveData();
 
     // Method to add a new term
     bool add_term(Term& newTerm);
 
     // Method to search for a term by name
-    Term* searchTerm(const std::string& termName);
+    std::vector<Term *> search_term(const std::string& name);
 
     // Method to list all terms
     void list_all_terms();

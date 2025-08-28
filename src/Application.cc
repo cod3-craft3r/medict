@@ -49,7 +49,8 @@ void Application::run() {
             std::cout << "calling function to del" << "\n";
         }
         else if (get_lower(command) == "find") {
-            std::cout << "calling function to find" << "\n";
+            // std::cout << "calling function to find" << "\n";
+            cmdHandler->find_term();
         }
         else if (get_lower(command) == "help") {
             std::cout << "Available commands: -\n";

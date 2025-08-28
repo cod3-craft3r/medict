@@ -59,3 +59,27 @@ bool Database::add_term(Term& newTerm)
     }
     return true;
 }
+
+std::vector<Term *> Database::search_term(const std::string& name)
+{
+    std::vector<Term *> results;
+    for (auto& termJson : knowledgeSpace["terms"]) {
+        std::string termName = termJson["termName"].get<std::string>();
+        if (get_lower(termName).find(name) != std::string::npos) {
+            Term* foundTerm = new Term();
+            foundTerm->termName = termJson["termName"];
+            foundTerm->definition = termJson["definition"];
+            foundTerm->category = termJson["category"];
+            foundTerm->learnedStatus = termJson["learnedStatus"];
+            foundTerm->creationDate = str_to_tm(termJson["creationDate"]);
+            foundTerm->lastReviewDate = str_to_tm(termJson["lastReviewDate"]);
+            foundTerm->notes = termJson["notes"];
+
+            // std::cout << termJson.dump(4) << std::endl;
+            // return foundTerm;
+            results.push_back(foundTerm);
+        }
+    }
+
+    return results;
+}

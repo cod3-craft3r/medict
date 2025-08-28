@@ -15,6 +15,7 @@ public:
     std::tm      lastReviewDate;
     std::string  notes;
 
+    Term() = default;
     // Constructor, getter and setter functions.
     Term(std::string name, std::string def, std::string cat, std::string notes)
         : termName(name), definition(def), category(cat), notes(notes), learnedStatus(false)

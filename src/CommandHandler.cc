@@ -1,4 +1,3 @@
-#include "util.hpp"
 #include "CommandHandler.hpp"
 
 void CommandHandler::set_database(std::unique_ptr<Database> database) {
@@ -48,4 +47,28 @@ bool CommandHandler::add_term_to_know_base()
     // TODO))
     // if (!db->searchTerm(newTerm)) // only add if term doesn't already exist
     return db->add_term(newTerm);
+}
+
+void CommandHandler::find_term()
+{
+    std::string name;
+    std::cout << "which term to search for: ";
+    std::getline(std::cin, name);
+    std::vector<Term *> foundTerms = db->search_term((const std::string) name);
+    if (foundTerms.size() > 0) {
+        std::cout << "Terms found: " << foundTerms.size() << "\n";
+        for(auto& foundTerm : foundTerms) {
+            std::cout << "--------------------\n";
+            std::cout << "Term: " << foundTerm->termName << "\n";
+            std::cout << "Definition: " << foundTerm->definition << "\n";
+            std::cout << "Category: " << foundTerm->category << "\n";
+            std::cout << "Learned Status: " << (foundTerm->learnedStatus ? "Learned" : "Not Learned") << "\n";
+            print_time_info(foundTerm->lastReviewDate, foundTerm->creationDate);
+            std::cout << "Notes: " << foundTerm->notes << "\n";
+            delete foundTerm; // Free the allocated memory
+        }
+        // Display other details as needed
+    } else {
+        std::cout << "Nothing found for: " << name << "\n";
+    }
 }

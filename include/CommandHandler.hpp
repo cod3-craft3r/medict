@@ -1,5 +1,6 @@
 #include <string>
 #include "Database.hpp"
+#include "util.hpp"
 #include "Term.hpp"
 
 class CommandHandler {
@@ -20,6 +21,6 @@ public:
     // Methods to handle commands
     void list_terms_in_know_base();
     bool add_term_to_know_base();
-    void handleSearchCommand(const std::string& name);
+    void find_term();
     void handleLearnedStatusCommand(const std::string& name, bool status);
 };

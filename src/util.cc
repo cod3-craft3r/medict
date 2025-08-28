@@ -19,7 +19,15 @@ void print_time_info(std::tm lastReview, std::tm creation)
               << std::put_time(&creation, "%Y-%m-%d") << std::endl;
             std::cout << "This was last reviewed yesterday." << std::endl;
         }
-        else if ((lastReview.tm_yday - localTime.tm_yday) < 7) {
+        else if (std::abs(lastReview.tm_yday - localTime.tm_yday) < 7) {
+            /*
+                debugging info
+            */
+            // if (gVerbose) {
+            //     std::cout << "lastReview.tm_yday: " << lastReview.tm_yday << "\n";
+            //     std::cout << "localTime.tm_yday: " << localTime.tm_yday << "\n";
+            //     std::cout << "difference: " << (lastReview.tm_yday - localTime.tm_yday) << "\n";
+            // }
             std::cout << "Created on: "
               << std::put_time(&creation, "%Y-%m-%d") << std::endl;
             std::cout << "Last reviewed on "
