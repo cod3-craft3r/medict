@@ -17,5 +17,5 @@ If you came here looking for alternative, you'll not be disappointed. But, if yo
 5. just run from your terminal - that's what CLI apps do best, duh? The command is: `<APPNAME>`.
 
 ### The Other way
-If you just want it to work, not bothered about the code or anything. Just download from [here](https://google.com/). You  really fell for it XD.
+If you just want it to work, and don't wish to build it yourself or browse the code or anything. Just download from [here](https://google.com/). You  really fell for it XD.
 and then simply run from terminal using: `<APPNAME>`.
