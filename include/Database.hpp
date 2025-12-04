@@ -43,4 +43,7 @@ public:
 
     // Method to update a term's learned status
     void updateLearnedStatus(const std::string& termName, bool status);
+    
+    // Method to update term after review (SR algorithm)
+    void updateTerm(const Term& term);
 };

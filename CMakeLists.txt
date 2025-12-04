@@ -7,6 +7,7 @@ add_executable(medict
     src/CommandHandler.cc
     src/Database.cc
     src/util.cc
+    src/SpacedRepetition.cc
 )
 
 target_include_directories(medict PRIVATE include/)

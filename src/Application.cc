@@ -11,7 +11,7 @@ Application::Application() {
 void Application::signalHandler(int signum) {
     if (signum == SIGINT) {
         std::cout << "\nReceived SIGINT. Shutting down gracefully... :-)\n";
-        running = false;
+        shutdown();
     }
 }
 
@@ -23,6 +23,7 @@ void Application::run() {
     //first we load the data.
     db->loadData();
     cmdHandler->set_database(std::move(db));
+    // cmdHandler->setRunningFlag(&Application::running);
 
     std::string command;
     while (running) {
@@ -52,11 +53,19 @@ void Application::run() {
             // std::cout << "calling function to find" << "\n";
             cmdHandler->find_term();
         }
+        else if (get_lower(command) == "due") {
+            cmdHandler->showDueTerms();
+        }
+        else if (get_lower(command) == "review") {
+            cmdHandler->reviewTerm();
+        }
         else if (get_lower(command) == "help") {
             std::cout << "Available commands: -\n";
             std::cout << "  - add:           Add a new Term to the Knowledge Base\n";
             std::cout << "  - del:           Delete a Term from the Knowledge Base\n";
             std::cout << "  - find:          Search for a Term in the Knowledge Base\n";
+            std::cout << "  - due:           Show terms due for review\n";
+            std::cout << "  - review:        Start an interactive review session\n";
             std::cout << "  - help:          Show this help message\n";
             std::cout << "  - ls:            List all Terms in the Knowledge Base\n";
             std::cout << "  - mod:           Modify an existing Term in the Knowledge Base\n";
@@ -73,6 +82,9 @@ void Application::shutdown() {
     running = false;
     // Add cleanup code here
     std::cout << "Shutting down...\n";
+
+    // kill the application
+    exit(0);
 }
 
 

@@ -3,7 +3,8 @@
 #include <ctime>
 #include <string>
 #include <iostream>
-#include <typeinfo>
+#include <iomanip>
+#include <sstream>
 
 class Term {
 public:
@@ -11,29 +12,40 @@ public:
     std::string  definition;
     std::string  category;
     bool         learnedStatus;
-    std::tm      creationDate;
-    std::tm      lastReviewDate;
+    std::string  creationDate;        // ISO 8601 format: YYYY-MM-DD
+    std::string  lastReviewDate;      // ISO 8601 format: YYYY-MM-DD
     std::string  notes;
+    
+    // Spaced Repetition Algorithm fields (SM-2)
+    double       easinessFactor;      // Starts at 2.5, range [1.3, 2.5]
+    int          interval;            // Days until next review
+    int          repetitionCount;     // Consecutive successful reviews
+    std::string  nextReviewDate;      // ISO 8601 format: YYYY-MM-DD
+    int          reviewCount;         // Total review attempts
+    double       correctRatio;        // Correct answers / total reviews
 
     Term() = default;
-    // Constructor, getter and setter functions.
+    
+    // Constructor for new terms
     Term(std::string name, std::string def, std::string cat, std::string notes)
-        : termName(name), definition(def), category(cat), notes(notes), learnedStatus(false)
+        : termName(name), definition(def), category(cat), notes(notes), learnedStatus(false),
+          easinessFactor(2.5), interval(0), repetitionCount(0), reviewCount(0), correctRatio(0.0)
         {
-            // lastReviewDate = "empty";
-            // notes = "empty";
-            // Get current time
-            auto now = std::chrono::system_clock::now();
-
-            // Convert to time_t to make it compatible with std::localtime
-            std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
-            
-            // Convert to local time
-            this->creationDate = *std::localtime(&nowTime);
-            this->lastReviewDate = *std::localtime(&nowTime);
-            
-            // Display the time in a nice format (e.g., YYYY-MM-DD HH:MM:SS)
-            // std::cout << "Current time: "
-            //   << std::put_time(&localTime, "%a, %Y-%m-%d %H:%M:%S") << std::endl;
+            std::string currentDate = getCurrentDateISO();
+            this->creationDate = currentDate;
+            this->lastReviewDate = currentDate;
+            this->nextReviewDate = currentDate;  // Review immediately
         }
+
+private:
+    // Helper to get current date in ISO 8601 format (YYYY-MM-DD)
+    static std::string getCurrentDateISO() {
+        auto now = std::chrono::system_clock::now();
+        std::time_t nowTime = std::chrono::system_clock::to_time_t(now);
+        std::tm* localTime = std::localtime(&nowTime);
+        
+        std::ostringstream oss;
+        oss << std::put_time(localTime, "%Y-%m-%d");
+        return oss.str();
+    }
 };

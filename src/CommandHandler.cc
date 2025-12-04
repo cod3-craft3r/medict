@@ -63,12 +63,162 @@ void CommandHandler::find_term()
             std::cout << "Definition: " << foundTerm->definition << "\n";
             std::cout << "Category: " << foundTerm->category << "\n";
             std::cout << "Learned Status: " << (foundTerm->learnedStatus ? "Learned" : "Not Learned") << "\n";
-            print_time_info(foundTerm->lastReviewDate, foundTerm->creationDate);
+            std::cout << "Created on: " << foundTerm->creationDate << "\n";
+            std::cout << "Last reviewed: " << foundTerm->lastReviewDate << "\n";
             std::cout << "Notes: " << foundTerm->notes << "\n";
             delete foundTerm; // Free the allocated memory
         }
         // Display other details as needed
     } else {
         std::cout << "Nothing found for: " << name << "\n";
+    }
+}
+
+void CommandHandler::showDueTerms()
+{
+    std::cout << "\n=== Terms Due for Review ===\n";
+    std::vector<Term *> dueTerms;
+    
+    // Get all terms and filter due ones
+    std::vector<Term *> allTerms = db->search_term("");  // Empty search returns all
+    
+    for (auto& term : allTerms) {
+        if (SpacedRepetition::isTermDueForReview(term->nextReviewDate)) {
+            dueTerms.push_back(term);
+        } else {
+            delete term;
+        }
+    }
+    
+    if (dueTerms.empty()) {
+        std::cout << "No terms due for review today!\n";
+        return;
+    }
+    
+    std::cout << "You have " << dueTerms.size() << " term(s) to review:\n\n";
+    for (size_t i = 0; i < dueTerms.size(); ++i) {
+        std::cout << (i + 1) << ". " << dueTerms[i]->termName 
+                  << " (Category: " << dueTerms[i]->category << ")\n";
+    }
+    std::cout << "\n";
+    
+    // Clean up
+    for (auto& term : dueTerms) {
+        delete term;
+    }
+}
+
+void CommandHandler::reviewTerm()
+{
+    std::cout << "\n=== Review Mode ===\n";
+    
+    // Get all terms
+    std::vector<Term *> allTerms = db->search_term("");
+    
+    std::vector<Term *> dueTerms;
+    for (auto& term : allTerms) {
+        if (SpacedRepetition::isTermDueForReview(term->nextReviewDate)) {
+            dueTerms.push_back(term);
+        } else {
+            delete term;
+        }
+    }
+    
+    if (dueTerms.empty()) {
+        std::cout << "No terms due for review!\n";
+        return;
+    }
+    
+    std::cout << "Starting review session with " << dueTerms.size() << " term(s)...\n";
+    
+    for (size_t i = 0; i < dueTerms.size(); ++i) {
+        Term* term = dueTerms[i];
+        std::cout << "=== Question " << (i + 1) << "/" << dueTerms.size() << " ===\n";
+        std::cout << "Term: " << term->termName << "\n";
+        std::cout << "Category: " << term->category << "\n";
+        std::cout << "\nTry to recall the definition before pressing Enter...\n";
+        std::cin.get();
+        
+        std::cout << "\nDefinition: " << term->definition << "\n";
+        std::cout << "Notes: " << term->notes << "\n";
+        
+        std::cout << "\nHow well did you remember? (0-5)\n";
+        std::cout << "  0: Completely forgot\n";
+        std::cout << "  1: Very difficult\n";
+        std::cout << "  2: Difficult\n";
+        std::cout << "  3: Difficult but got it\n";
+        std::cout << "  4: Good\n";
+        std::cout << "  5: Perfect!\n";
+        std::cout << "Enter quality (0-5): ";
+        
+        int quality;
+        std::cin >> quality;
+        std::cin.ignore();  // Clear the newline from buffer
+        
+        if (quality < 0 || quality > 5) {
+            std::cout << "Invalid input. Skipping...\n";
+            continue;
+        }
+        
+        updateTermReview(term->termName, quality);
+        std::cout << "\n";
+    }
+    
+    // Clean up
+    for (auto& term : dueTerms) {
+        delete term;
+    }
+    
+    std::cout << "Review session complete!\n";
+}
+
+void CommandHandler::updateTermReview(const std::string& termName, int quality)
+{
+    // Create a copy to make lowercase for search
+    std::string lowerTermName = termName;
+    for (char& c : lowerTermName) {
+        c = std::tolower(c);
+    }
+    std::vector<Term *> foundTerms = db->search_term(lowerTermName);
+    
+    if (foundTerms.empty()) {
+        std::cout << "Term not found.\n";
+        return;
+    }
+    
+    Term* term = foundTerms[0];
+    
+    // Calculate new SR values
+    ReviewResult result = SpacedRepetition::calculateReview(
+        quality,
+        term->easinessFactor,
+        term->interval,
+        term->repetitionCount,
+        static_cast<int>(term->correctRatio * term->reviewCount),  // correct count
+        term->reviewCount
+    );
+    
+    // Update term
+    term->easinessFactor = result.newEF;
+    term->interval = result.nextInterval;
+    term->repetitionCount = result.newRepetitions;
+    term->lastReviewDate = SpacedRepetition::getCurrentDateISO();
+    term->nextReviewDate = SpacedRepetition::addDaysToDate(term->lastReviewDate, result.nextInterval);
+    term->reviewCount++;
+    term->correctRatio = result.newCorrectRatio;
+    
+    // Save updated term to database
+    db->updateTerm(*term);
+    
+    // Display feedback
+    if (quality >= 3) {
+        std::cout << "✓ Good! Next review in " << result.nextInterval << " day(s).\n";
+    } else {
+        std::cout << "✗ Let's review this again soon. Next review tomorrow.\n";
+    }
+    
+    // Clean up
+    for (auto& t : foundTerms) {
+        delete t;
     }
 }

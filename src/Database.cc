@@ -40,9 +40,17 @@ bool Database::add_term(Term& newTerm)
         termJson["definition"] = newTerm.definition;
         termJson["category"] = newTerm.category;
         termJson["learnedStatus"] = newTerm.learnedStatus;
-        termJson["creationDate"] = tm_to_str(newTerm.creationDate);
-        termJson["lastReviewDate"] = tm_to_str(newTerm.lastReviewDate);
+        termJson["creationDate"] = newTerm.creationDate;
+        termJson["lastReviewDate"] = newTerm.lastReviewDate;
         termJson["notes"] = newTerm.notes;
+        
+        // Spaced Repetition fields
+        termJson["easinessFactor"] = newTerm.easinessFactor;
+        termJson["interval"] = newTerm.interval;
+        termJson["repetitionCount"] = newTerm.repetitionCount;
+        termJson["nextReviewDate"] = newTerm.nextReviewDate;
+        termJson["reviewCount"] = newTerm.reviewCount;
+        termJson["correctRatio"] = newTerm.correctRatio;
 
         std::cout << termJson.dump(4) << std::endl;
         knowledgeSpace["terms"].push_back(termJson);
@@ -71,9 +79,17 @@ std::vector<Term *> Database::search_term(const std::string& name)
             foundTerm->definition = termJson["definition"];
             foundTerm->category = termJson["category"];
             foundTerm->learnedStatus = termJson["learnedStatus"];
-            foundTerm->creationDate = str_to_tm(termJson["creationDate"]);
-            foundTerm->lastReviewDate = str_to_tm(termJson["lastReviewDate"]);
+            foundTerm->creationDate = termJson["creationDate"];
+            foundTerm->lastReviewDate = termJson["lastReviewDate"];
             foundTerm->notes = termJson["notes"];
+            
+            // Spaced Repetition fields
+            foundTerm->easinessFactor = termJson.value("easinessFactor", 2.5);
+            foundTerm->interval = termJson.value("interval", 0);
+            foundTerm->repetitionCount = termJson.value("repetitionCount", 0);
+            foundTerm->nextReviewDate = termJson.value("nextReviewDate", "");
+            foundTerm->reviewCount = termJson.value("reviewCount", 0);
+            foundTerm->correctRatio = termJson.value("correctRatio", 0.0);
 
             // std::cout << termJson.dump(4) << std::endl;
             // return foundTerm;
@@ -82,4 +98,39 @@ std::vector<Term *> Database::search_term(const std::string& name)
     }
 
     return results;
+}
+
+void Database::updateTerm(const Term& term)
+{
+    try {
+        for (auto& termJson : knowledgeSpace["terms"]) {
+            if (termJson["termName"].get<std::string>() == term.termName) {
+                // Update all fields
+                termJson["definition"] = term.definition;
+                termJson["category"] = term.category;
+                termJson["learnedStatus"] = term.learnedStatus;
+                termJson["creationDate"] = term.creationDate;
+                termJson["lastReviewDate"] = term.lastReviewDate;
+                termJson["notes"] = term.notes;
+                
+                // Update SR fields
+                termJson["easinessFactor"] = term.easinessFactor;
+                termJson["interval"] = term.interval;
+                termJson["repetitionCount"] = term.repetitionCount;
+                termJson["nextReviewDate"] = term.nextReviewDate;
+                termJson["reviewCount"] = term.reviewCount;
+                termJson["correctRatio"] = term.correctRatio;
+                
+                // Save to file
+                std::ofstream output_file(filePath);
+                output_file << std::setw(4) << knowledgeSpace << std::endl;
+                output_file.close();
+                
+                return;
+            }
+        }
+        std::cout << "Term not found in database.\n";
+    } catch (const std::exception& e) {
+        std::cout << "Failed to update term: " << e.what() << std::endl;
+    }
 }

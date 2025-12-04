@@ -29,6 +29,6 @@ public:
     Application& operator=(Application&&) = default;
 
     void run();
-    void shutdown();
+    static void shutdown();
     static bool isRunning() { return running; }
 };
