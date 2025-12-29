@@ -1,4 +1,5 @@
 #include "CommandHandler.hpp"
+// #include "Render.hpp"
 
 void CommandHandler::set_database(std::unique_ptr<Database> database) {
     db = std::move(database);
@@ -66,6 +67,14 @@ void CommandHandler::find_term()
             std::cout << "Created on: " << foundTerm->creationDate << "\n";
             std::cout << "Last reviewed: " << foundTerm->lastReviewDate << "\n";
             std::cout << "Notes: " << foundTerm->notes << "\n";
+
+            // std::cout << "Do you want to load the image associated w/ this term? (yes/no): ";
+            // std::string response;
+            // std::getline(std::cin, response);
+            // if (get_lower(response) == "yes") {
+            //     nlohmann::json imagesToLoad = 
+            // }
+
             delete foundTerm; // Free the allocated memory
         }
         // Display other details as needed
@@ -114,7 +123,8 @@ void CommandHandler::reviewTerm()
     
     // Get all terms
     std::vector<Term *> allTerms = db->search_term("");
-    
+
+    // i could make the fn above return a list of all the terms to be reviewed...
     std::vector<Term *> dueTerms;
     for (auto& term : allTerms) {
         if (SpacedRepetition::isTermDueForReview(term->nextReviewDate)) {
@@ -149,7 +159,7 @@ void CommandHandler::reviewTerm()
         std::cout << "  3: Difficult but got it\n";
         std::cout << "  4: Good\n";
         std::cout << "  5: Perfect!\n";
-        std::cout << "Enter quality (0-5): ";
+        std::cout << "Enter (0-5): ";
         
         int quality;
         std::cin >> quality;
@@ -182,11 +192,11 @@ void CommandHandler::updateTermReview(const std::string& termName, int quality)
     std::vector<Term *> foundTerms = db->search_term(lowerTermName);
     
     if (foundTerms.empty()) {
-        std::cout << "Term not found.\n";
+        std::cout << "Failed to update after review. Term not found.\n";
         return;
     }
     
-    Term* term = foundTerms[0];
+    Term* term = foundTerms[0];  // i need to make my searching robust. really robust.
     
     // Calculate new SR values
     ReviewResult result = SpacedRepetition::calculateReview(
@@ -214,7 +224,7 @@ void CommandHandler::updateTermReview(const std::string& termName, int quality)
     if (quality >= 3) {
         std::cout << "✓ Good! Next review in " << result.nextInterval << " day(s).\n";
     } else {
-        std::cout << "✗ Let's review this again soon. Next review tomorrow.\n";
+        std::cout << "✗ Let's review this again soon. Next review in " << result.nextInterval << " day(s).\n";
     }
     
     // Clean up

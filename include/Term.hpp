@@ -28,7 +28,7 @@ public:
     
     // Constructor for new terms
     Term(std::string name, std::string def, std::string cat, std::string notes)
-        : termName(name), definition(def), category(cat), notes(notes), learnedStatus(false),
+        : termName(name), definition(def), category(cat), learnedStatus(false), notes(notes),
           easinessFactor(2.5), interval(0), repetitionCount(0), reviewCount(0), correctRatio(0.0)
         {
             std::string currentDate = getCurrentDateISO();

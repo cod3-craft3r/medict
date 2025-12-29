@@ -1,4 +1,5 @@
 #include "Database.hpp"
+#include "Render.hpp"
 
 // possibly make this method return bool, to indicate success/failure
 void Database::loadData() {
@@ -7,8 +8,7 @@ void Database::loadData() {
 
     for (auto const& dirEntry : std::filesystem::directory_iterator{dataPath})
         std::cout << dirEntry.path() << "\n";
-    std::cout << "***********************************************************\n\n";
-
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n";
 
     filePath = dataPath.c_str();
     filePath += "/test.json";
@@ -84,12 +84,32 @@ std::vector<Term *> Database::search_term(const std::string& name)
             foundTerm->notes = termJson["notes"];
             
             // Spaced Repetition fields
-            foundTerm->easinessFactor = termJson.value("easinessFactor", 2.5);
-            foundTerm->interval = termJson.value("interval", 0);
-            foundTerm->repetitionCount = termJson.value("repetitionCount", 0);
-            foundTerm->nextReviewDate = termJson.value("nextReviewDate", "");
-            foundTerm->reviewCount = termJson.value("reviewCount", 0);
-            foundTerm->correctRatio = termJson.value("correctRatio", 0.0);
+            // foundTerm->easinessFactor = termJson.value("easinessFactor", 2.5);
+            // foundTerm->interval = termJson.value("interval", 0);
+            // foundTerm->repetitionCount = termJson.value("repetitionCount", 0);
+            // foundTerm->nextReviewDate = termJson.value("nextReviewDate", "");
+            // foundTerm->reviewCount = termJson.value("reviewCount", 0);
+            // foundTerm->correctRatio = termJson.value("correctRatio", 0.0);
+
+            if ( termJson["images"].is_array() ) {
+                json img_list = termJson["images"];
+                if ( img_list.size() > 0 ) {
+                    std::cout << "Do you want to load the image associated w/ this term? (yes/no): ";
+                    std::string response;
+                    std::getline(std::cin, response);
+                    if (get_lower(response) == "yes") {
+                        int cnt = 1;
+                        for ( auto& img_path : img_list ) {
+                            std::string name = std::format("{} {}", foundTerm->termName, cnt++);
+                            std::string imagePath = img_path.get<std::string>();
+                            std::thread renderThread([imagePath, name]() {
+                                Render(imagePath, name);
+                            });
+                            renderThread.detach();
+                        }
+                    }
+                }
+            }
 
             // std::cout << termJson.dump(4) << std::endl;
             // return foundTerm;

@@ -1,6 +1,8 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <format>
+#include <thread>
 #include "Term.hpp"
 #include "util.hpp"
 #include "json.hpp"
