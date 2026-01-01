@@ -1,5 +1,4 @@
 #include "CommandHandler.hpp"
-// #include "Render.hpp"
 
 void CommandHandler::set_database(std::unique_ptr<Database> database) {
     db = std::move(database);
