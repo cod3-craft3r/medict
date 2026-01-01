@@ -53,6 +53,10 @@ std::string get_lower(std::string &str)
     return str;
 }
 
+/**
+ * @brief Get the data directory path according to XDG Base Directory Specification
+ * @return std::filesystem::path Data directory path
+*/
 std::filesystem::path getDataDir() {
     const char *xdgDataDir = std::getenv("XDG_DATA_HOME");
     std::string dataDir;

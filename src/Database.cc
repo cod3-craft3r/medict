@@ -102,10 +102,10 @@ std::vector<Term *> Database::search_term(const std::string& name)
                         for ( auto& img_path : img_list ) {
                             std::string name = std::format("{} {}", foundTerm->termName, cnt++);
                             std::string imagePath = img_path.get<std::string>();
-                            std::thread renderThread([imagePath, name]() {
+                            // std::thread renderThread([imagePath, name]() {
                                 Render(imagePath, name);
-                            });
-                            renderThread.detach();
+                            // });
+                            // renderThread.detach();
                         }
                     }
                 }

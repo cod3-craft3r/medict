@@ -1,8 +1,6 @@
 #pragma once
-#include <memory>
-#include <csignal>
-#include <atomic>
-#include <iostream>
+
+#include "util.hpp"
 #include "CommandHandler.hpp"
 
 class Application {

@@ -15,6 +15,10 @@ if [[ "$(docker images -q $IMAGE_NAME 2> /dev/null)" == "" ]]; then
   echo
   docker run --rm -it \
              -w /work \
+             -v $(pwd):/work \
+             --env DISPLAY=unix$DISPLAY \
+             --privileged \
+             --volume /tmp/.X11-unix:/tmp/.X11-unix \
              $IMAGE_NAME \
              /bin/bash
 else
@@ -24,5 +28,9 @@ fi
 
 docker run --rm -it \
            -w /work \
+           -v $(pwd):/work \
+           --env DISPLAY=unix$DISPLAY \
+           --privileged \
+           --volume /tmp/.X11-unix:/tmp/.X11-unix \
            $IMAGE_NAME \
            /bin/bash

@@ -1,6 +1,5 @@
 #include "SpacedRepetition.hpp"
-#include <iomanip>
-#include <sstream>
+#include "util.hpp"
 
 ReviewResult SpacedRepetition::calculateReview(
     int quality,

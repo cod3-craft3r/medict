@@ -1,4 +1,5 @@
 #include "Render.hpp"
+#include "util.hpp"
 
 SDL_Texture* loadTexture(const std::string &imagePath, SDL_Renderer* renderer) {
     SDL_Texture* newTexture = nullptr;
@@ -59,7 +60,7 @@ std::unique_ptr<SDLContext> initializeSDL(const std::string& title) {
     return context;
 }
 
-void Render(const std::string imagePath, const std::string title) {
+void Render(const std::string &imagePath, const std::string &title) {
 
     std::unique_ptr<SDLContext> ctx = initializeSDL(title);
 

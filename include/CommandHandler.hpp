@@ -1,4 +1,5 @@
-#include <string>
+#pragma once
+
 #include "Database.hpp"
 #include "util.hpp"
 #include "Term.hpp"

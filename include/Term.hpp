@@ -1,10 +1,6 @@
 #pragma once
-#include <chrono>
-#include <ctime>
-#include <string>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+
+#include "util.hpp"
 
 class Term {
 public:
