@@ -5,7 +5,7 @@
 
 class Application {
 private:
-    static std::atomic<bool> running;
+    // static std::atomic<bool> running;
     // CommandHandler cmdHandler;
     std::unique_ptr<Database> db;
     std::unique_ptr<CommandHandler> cmdHandler;
@@ -15,6 +15,8 @@ private:
     void validateArgs(const int argc, const char* argv[]);
     
 public:
+    static std::atomic<bool> running;
+
     Application();
     ~Application() = default;
     

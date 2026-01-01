@@ -1,106 +1,201 @@
 #include "Render.hpp"
 #include "util.hpp"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <vector>
+#include <mutex>
+#include <algorithm>
+#include <iostream>
+#include <memory>
+#include <future>
+#include <thread>
 
-SDL_Texture* loadTexture(const std::string &imagePath, SDL_Renderer* renderer) {
-    SDL_Texture* newTexture = nullptr;
+// --- Internal Structures ---
 
-    // Load image at specified path using SDL_image
-    // IMG_LoadTexture creates a texture directly from a file
-    newTexture = IMG_LoadTexture(renderer, imagePath.c_str());
+struct RenderRequest {
+    std::vector<std::string> paths;
+    std::string title;
+};
 
-    if (newTexture == nullptr) {
-        std::cerr << "Failed to load image! SDL_image Error: " << IMG_GetError() << std::endl;
+// Thread-safe queue
+static std::vector<RenderRequest> requestQueue;
+static std::mutex queueMutex;
+
+// Helper function to load surface asynchronously
+static SDL_Surface* loadSurfaceAsync(std::string path) {
+    SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+    if (loadedSurface == nullptr) {
+        std::cerr << "Unable to load image " << path << "! SDL_image Error: " << IMG_GetError() << std::endl;
     }
-
-    return newTexture;
+    return loadedSurface;
 }
 
-std::unique_ptr<SDLContext> initializeSDL(const std::string& title) {
-    // 1. Initialize SDL
+struct ImageState {
+    std::string path;
+    std::shared_future<SDL_Surface*> surfaceFuture;
+    SDL_Texture* texture = nullptr;
+    bool textureCreated = false;
+};
+
+struct ImageWindow {
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+    Uint32 windowID = 0;
+    bool shouldClose = false;
+    
+    std::vector<ImageState> images;
+    size_t currentIndex = 0;
+
+    ~ImageWindow() {
+        for(auto& img : images) {
+            if (img.texture) SDL_DestroyTexture(img.texture);
+        }
+        if (renderer) SDL_DestroyRenderer(renderer);
+        if (window) SDL_DestroyWindow(window);
+    }
+};
+
+// --- Public API ---
+
+void requestRender(const std::vector<std::string>& imagePaths, const std::string& title) {
+    std::lock_guard<std::mutex> lock(queueMutex);
+    requestQueue.push_back({imagePaths, title});
+}
+
+void runRenderLoop(std::atomic<bool>& isAppRunning) {
+    // 1. Global Initialization
+    
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cerr << "SDL could not initialize! SDL Error: " << SDL_GetError() << std::endl;
-        return nullptr;
+        std::cerr << "SDL Init Failed: " << SDL_GetError() << std::endl;
+        return;
     }
-    
-    auto context = std::make_unique<SDLContext>();
-
-    // 2. Create Window
-    context->window = SDL_CreateWindow(title.c_str(),
-                                          SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-                                          SCREEN_WIDTH, SCREEN_HEIGHT, 
-                                          SDL_WINDOW_SHOWN);
-    
-    if (!context->window) {
-        std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return nullptr;
-    }
-    
-    // 3. Create Renderer
-    // This is the "painter" that draws to the window
-    context->renderer = SDL_CreateRenderer(context->window, -1, SDL_RENDERER_ACCELERATED);
-    
-    if (!context->renderer) {
-        std::cerr << "Renderer creation failed: " << SDL_GetError() << std::endl;
-        SDL_DestroyWindow(context->window);
-        SDL_Quit();
-        return nullptr;
-    }
-
-    // 4. Initialize SDL_image (IMPORTANT for PNG/JPG)
     int imgFlags = (IMG_INIT_PNG | IMG_INIT_JPG);
     if (!(IMG_Init(imgFlags) & imgFlags)) {
-        std::cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << std::endl;
-        SDL_DestroyRenderer(context->renderer);
-        SDL_DestroyWindow(context->window);
-        SDL_Quit();
-        return nullptr;
+        std::cerr << "SDL_image Init Failed: " << IMG_GetError() << std::endl;
+        return;
     }
-    
-    return context;
-}
 
-void Render(const std::string &imagePath, const std::string &title) {
+    std::vector<std::unique_ptr<ImageWindow>> windows;
 
-    std::unique_ptr<SDLContext> ctx = initializeSDL(title);
+    // 2. The Main UI Loop
+    while (isAppRunning || !windows.empty()) {
+        
+        // A. Process New Requests
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            for (const auto& req : requestQueue) {
+                if (req.paths.empty()) continue;
 
-    // Load the texture
-    SDL_Texture* imgTexture = loadTexture(imagePath, ctx->renderer);
-    
-    // Force the cursor to appear
-    SDL_ShowCursor(SDL_ENABLE);
+                auto win = std::make_unique<ImageWindow>();
+                // Create window
+                win->window = SDL_CreateWindow(req.title.c_str(), 
+                                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+                                             800, 600, 
+                                             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+                
+                if (win->window) {
+                    win->windowID = SDL_GetWindowID(win->window);
+                    win->renderer = SDL_CreateRenderer(win->window, -1, SDL_RENDERER_ACCELERATED);
+                    
+                    if (win->renderer) {
+                        // Initialize Image States and start async loading
+                        win->images.resize(req.paths.size());
+                        for(size_t i=0; i<req.paths.size(); ++i) {
+                            win->images[i].path = req.paths[i];
+                            win->images[i].surfaceFuture = std::async(std::launch::async, loadSurfaceAsync, req.paths[i]);
+                        }
+                        windows.push_back(std::move(win));
+                    }
+                }
+            }
+            requestQueue.clear();
+        }
 
-    // 5. Game Loop
-    bool quit = false;
-    SDL_Event e;
-    while (!quit) {
-        // Handle events (like clicking the X button)
-        while (SDL_PollEvent(&e) != 0) {
+        // B. Handle SDL Events
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
-                quit = true;
+                // Don't quit the app, just close all windows
+                for (auto& win : windows) {
+                    win->shouldClose = true;
+                }
+            }
+            else if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE) {
+                for (auto& win : windows) {
+                    if (win->windowID == e.window.windowID) {
+                        win->shouldClose = true;
+                    }
+                }
+            }
+            else if (e.type == SDL_KEYDOWN) {
+                // Find which window has focus or matches the event windowID
+                for (auto& win : windows) {
+                    if (win->windowID == e.key.windowID) {
+                        switch (e.key.keysym.sym) {
+                            case SDLK_RIGHT:
+                                win->currentIndex = (win->currentIndex + 1) % win->images.size();
+                                break;
+                            case SDLK_LEFT:
+                                win->currentIndex = (win->currentIndex - 1 + win->images.size()) % win->images.size();
+                                break;
+                            case SDLK_ESCAPE:
+                            case SDLK_q:
+                                win->shouldClose = true;
+                                break;
+                        }
+                        break; // Found the window
+                    }
+                }
             }
         }
 
-        // Clear screen (wipe previous frame)
-        SDL_SetRenderDrawColor(ctx->renderer, 0xFF, 0xFF, 0xFF, 0xFF); // White background
-        SDL_RenderClear(ctx->renderer);
+        // C. Update & Render All Windows
+        for (auto& win : windows) {
+            if (!win->renderer) continue;
 
-        // Render texture to screen
-        if (imgTexture != nullptr) {
-            // NULL as the second argument means draw the whole image
-            // NULL as the third argument means stretch it to fill the whole window
-            // You can replace the 3rd NULL with an SDL_Rect to define size/position
-            SDL_RenderCopy(ctx->renderer, imgTexture, NULL, NULL);
+            // Check texture for current image
+            ImageState& currentImg = win->images[win->currentIndex];
+            if (!currentImg.textureCreated) {
+                if (currentImg.surfaceFuture.valid()) {
+                    auto status = currentImg.surfaceFuture.wait_for(std::chrono::milliseconds(0));
+                    if (status == std::future_status::ready) {
+                        SDL_Surface* surface = currentImg.surfaceFuture.get();
+                        if (surface) {
+                            currentImg.texture = SDL_CreateTextureFromSurface(win->renderer, surface);
+                            SDL_FreeSurface(surface);
+                        }
+                        currentImg.textureCreated = true;
+                    }
+                }
+            }
+
+            // Draw
+            SDL_SetRenderDrawColor(win->renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+            SDL_RenderClear(win->renderer);
+
+            if (currentImg.textureCreated && currentImg.texture) {
+                SDL_RenderCopy(win->renderer, currentImg.texture, NULL, NULL);
+            } else {
+                // Loading placeholder
+                SDL_SetRenderDrawColor(win->renderer, 0x80, 0x80, 0x80, 0xFF);
+                SDL_Rect rect = { 400 - 50, 300 - 50, 100, 100 }; // Center-ish
+                SDL_RenderFillRect(win->renderer, &rect);
+            }
+
+            SDL_RenderPresent(win->renderer);
         }
 
-        // Update screen
-        SDL_RenderPresent(ctx->renderer);
+        // D. Cleanup Closed Windows
+        windows.erase(std::remove_if(windows.begin(), windows.end(), 
+            [](const std::unique_ptr<ImageWindow>& w){ return w->shouldClose; }), 
+            windows.end());
+
+        // E. Sleep
+        SDL_Delay(16);
     }
 
-    // 6. Cleanup
-    SDL_DestroyTexture(imgTexture);
-    SDL_DestroyRenderer(ctx->renderer);
-    SDL_DestroyWindow(ctx->window);
+    // 3. Global Cleanup
+    windows.clear();
     IMG_Quit();
     SDL_Quit();
 }

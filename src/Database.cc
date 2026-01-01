@@ -98,14 +98,12 @@ std::vector<Term *> Database::search_term(const std::string& name)
                     std::string response;
                     std::getline(std::cin, response);
                     if (get_lower(response) == "yes") {
-                        int cnt = 1;
+                        std::vector<std::string> imagePaths;
                         for ( auto& img_path : img_list ) {
-                            std::string name = std::format("{} {}", foundTerm->termName, cnt++);
-                            std::string imagePath = img_path.get<std::string>();
-                            // std::thread renderThread([imagePath, name]() {
-                                Render(imagePath, name);
-                            // });
-                            // renderThread.detach();
+                            imagePaths.push_back(img_path.get<std::string>());
+                        }
+                        if (!imagePaths.empty()) {
+                            requestRender(imagePaths, foundTerm->termName);
                         }
                     }
                 }

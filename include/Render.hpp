@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <vector>
 #include "util.hpp"
 
 // Screen dimensions
@@ -41,8 +42,15 @@ SDL_Texture* loadTexture(const std::string &imagePath, SDL_Renderer* renderer);
 std::unique_ptr<SDLContext> initializeSDL(const std::string& title);
 
 /**
- * Load an image from a file path and render it in a window
- * @param imagePath Path to the image file
+ * Load images from file paths and render them in a window.
+ * Supports navigation with Left/Right arrow keys.
+ * @param imagePaths Vector of paths to the image files
  * @param title Title of the rendered SDL window
  */
-void Render(const std::string &imagePath, const std::string &title);
+void Render(const std::vector<std::string> &imagePaths, const std::string &title);
+
+// Non-blocking request to open a window with a gallery of images
+void requestRender(const std::vector<std::string>& imagePaths, const std::string& title);
+
+// The main UI loop (runs on Main Thread)
+void runRenderLoop(std::atomic<bool>& isAppRunning);

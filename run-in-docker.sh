@@ -2,6 +2,9 @@
 
 IMAGE_NAME="medict-devenv"
 
+xhost +
+export DISPLAY=:0.0
+
 # Check if the Docker image exists
 if [[ "$(docker images -q $IMAGE_NAME 2> /dev/null)" == "" ]]; then
   echo
